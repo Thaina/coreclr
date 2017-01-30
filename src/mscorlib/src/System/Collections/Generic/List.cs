@@ -866,18 +866,30 @@ namespace System.Collections.Generic {
         // decreased by one.
         // 
         public void RemoveAt(int index) {
+           TakeAt(index);
+        }
+
+        // Removes the element at the given index. The size of the list is
+        // decreased by one.
+        // 
+        public T TakeAt(int index) {
             if ((uint)index >= (uint)_size) {
                 ThrowHelper.ThrowArgumentOutOfRange_IndexException();
             }
             Contract.EndContractBlock();
             _size--;
+            
+            var tmp = _items[index];
             if (index < _size) {
                 Array.Copy(_items, index + 1, _items, index, _size - index);
             }
+
             _items[_size] = default(T);
             _version++;
+            
+            return tmp;
         }
-    
+
         // Removes a range of elements from this list.
         // 
         public void RemoveRange(int index, int count) {
@@ -893,15 +905,48 @@ namespace System.Collections.Generic {
                 ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
             Contract.EndContractBlock();
     
-            if (count > 0) {
-                int i = _size;
-                _size -= count;
-                if (index < _size) {
-                    Array.Copy(_items, index + count, _items, index, _size - index);
-                }
-                Array.Clear(_items, _size, count);
-                _version++;
+            if (count < 1) {
+                return null;
             }
+
+            _size -= count;
+            if (index < _size) {
+                Array.Copy(_items, index + count, _items, index, _size - index);
+            }
+            Array.Clear(_items, _size, count);
+            _version++;
+        }
+    
+        // Removes a range of elements from this list.
+        // 
+        public T[] TakeRange(int index, int count) {
+            if (index < 0) {
+                ThrowHelper.ThrowIndexArgumentOutOfRange_NeedNonNegNumException();
+            }
+
+            if (count < 0) {
+                ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.count, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+            }
+                
+            if (_size - index < count)
+                ThrowHelper.ThrowArgumentException(ExceptionResource.Argument_InvalidOffLen);
+            Contract.EndContractBlock();
+    
+            if (count < 1) {
+                return null;
+            }
+            
+            var result = new T[count];
+            Array.Copy(_items, index,result,0,count);
+
+            _size -= count;
+            if (index < _size) {
+                Array.Copy(_items, index + count, _items, index, _size - index);
+            }
+            Array.Clear(_items, _size, count);
+            _version++;
+            
+            return result;
         }
     
         // Reverses the elements in this list.
